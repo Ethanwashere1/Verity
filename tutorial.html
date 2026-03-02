@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8">
     <title>Verity</title>
-    <link rel="stylesheet" href = "index.css">
-    <script defer="index.js"></script>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="modal-styles.css">
+    <script defer src="index.js"></script>
+    <script defer src="tutorial.js"></script>
 
     <header>
         <div class="nav-bar">
@@ -23,8 +25,62 @@
         </div>
     </header>
     <body>
-        <div class = "container">
-            Tutorials
+        <div class="tutorial-head">
+            <h2>Tutorial Videos</h2>
+        </div>
+        
+        <div class="tutorials-grid">
+            <div class="tutorial-card" data-video-id="1" data-video-url="jNQXAC9IVRw">
+                <div class="video-preview">
+                    <div class="play-button">▶</div>
+                    <img src="https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg" alt="Video 1 preview" />
+                </div>
+                <div class="video-info">
+                    <h3>Video Title 1</h3>
+                    <p>Short description of the video content goes here.</p>
+                </div>
+            </div>
+
+            <div class="tutorial-card" data-video-id="2" data-video-url="jNQXAC9IVRw">
+                <div class="video-preview">
+                    <div class="play-button">▶</div>
+                    <img src="https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg" alt="Video 2 preview" />
+                </div>
+                <div class="video-info">
+                    <h3>Video Title 2</h3>
+                    <p>Short description of the video content goes here.</p>
+                </div>
+            </div>
+
+            <div class="tutorial-card" data-video-id="3" data-video-url="jNQXAC9IVRw">
+                <div class="video-preview">
+                    <div class="play-button">▶</div>
+                    <img src="https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg" alt="Video 3 preview" />
+                </div>
+                <div class="video-info">
+                    <h3>Video Title 3</h3>
+                    <p>Short description of the video content goes here.</p>
+                </div>
+            </div>
+
+            <div class="tutorial-card" data-video-id="4" data-video-url="jNQXAC9IVRw">
+                <div class="video-preview">
+                    <div class="play-button">▶</div>
+                    <img src="https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg" alt="Video 4 preview" />
+                </div>
+                <div class="video-info">
+                    <h3>Video Title 4</h3>
+                    <p>Short description of the video content goes here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Modal -->
+        <div id="video-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <iframe id="video-player" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
         </div>
     </body>
 </html>

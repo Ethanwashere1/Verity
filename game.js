@@ -15,6 +15,7 @@ function showMission(id) {
     const gameArea = document.getElementById('game-area');
     gameArea.style.display = 'grid';
     document.getElementById('left-panel').textContent = 'Mission ' + id + ' - left content';
+    document.getElementById('right-panel').src = "/Assets/Prisoner 1 SVG.svg";
 }
 
 // wait for DOM ready and run
