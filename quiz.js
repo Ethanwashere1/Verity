@@ -32,7 +32,7 @@ function startQuiz() {
 
 function renderQuestion() {
     const q = questions[currentQuestion];
-    document.getElementById('question-text').textContent = q.number;
+    document.getElementById('question-number').textContent = q.number;
     document.getElementById('question-text').textContent = q.text;
     const answersDiv = document.getElementById('answers');
     answersDiv.innerHTML = '';
