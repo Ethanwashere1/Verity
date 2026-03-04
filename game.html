@@ -58,6 +58,15 @@
                 <div id="character-detail">
                     <!-- character details populated by JS -->
                 </div>
+                <div id="chat-interface" style="display:none;">
+                    <div id="chat-messages" class="chat-messages">
+                        <!-- messages populated by JS -->
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Ask the character a question..." class="chat-input">
+                        <button id="chat-send" class="chat-send-btn">Send</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -104,6 +113,15 @@
                 <div style="margin-top:10px;text-align:right;">
                     <button id="verdict-submit">Submit</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mission Complete Modal -->
+        <div id="mission-complete-modal" class="modal">
+            <div class="modal-content small">
+                <h3 id="complete-title">Mission Complete!</h3>
+                <p id="complete-message">You have successfully solved this case.</p>
+                <button id="return-to-timeline" class="modal-action-btn">Return to Timeline</button>
             </div>
         </div>
 

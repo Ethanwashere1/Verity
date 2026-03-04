@@ -83,6 +83,18 @@ function initGamePage() {
     // verdict submit handler
     const vSubmit = document.getElementById('verdict-submit');
     if (vSubmit) vSubmit.addEventListener('click', submitVerdict);
+    
+    // completion modal handler
+    const returnBtn = document.getElementById('return-to-timeline');
+    if (returnBtn) returnBtn.addEventListener('click', returnToTimeline);
+    
+    // chat handlers
+    const chatSend = document.getElementById('chat-send');
+    if (chatSend) chatSend.addEventListener('click', sendChatMessage);
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendChatMessage();
+    });
 }
 
 function showMission(id) {
@@ -92,9 +104,13 @@ function showMission(id) {
     
     // Initialize mission memory if not already done
     if (!missionMemory[id]) {
+        // create chat containers per character so messages persist for the duration of the mission
+        const chats = {};
+        missionsData[id].characters.forEach(c => { chats[c.id] = []; });
         missionMemory[id] = {
             attempts: 0,
-            verdicts: []
+            verdicts: [],
+            chats: chats
         };
     }
     
@@ -170,6 +186,9 @@ function showMission(id) {
         // deactivate any character active state
         document.querySelectorAll('#character-list button').forEach(b => b.classList.remove('active'));
         evidenceBtn.classList.add('active');
+        // Hide chat interface when viewing evidence
+        const chatInterface = document.getElementById('chat-interface');
+        if (chatInterface) chatInterface.style.display = 'none';
         showEvidenceReport(evidence);
     });
     evidenceLi.appendChild(evidenceBtn);
@@ -197,6 +216,22 @@ function selectCharacter(character, evidenceArray) {
     // ensure evidence tab is not active
     const evTab = document.querySelector('.evidence-tab'); if (evTab) evTab.classList.remove('active');
     showCharacterDetail(character, evidenceArray[0]);
+    
+    // Show chat interface and initialize chat
+    const chatInterface = document.getElementById('chat-interface');
+    if (chatInterface) {
+        chatInterface.style.display = 'flex';
+        // Store current character for chat context
+        chatInterface.dataset.currentCharacter = character.id;
+        chatInterface.dataset.characterName = character.name;
+        const chatMessages = document.getElementById('chat-messages');
+        chatMessages.innerHTML = '';
+        // Restore saved messages for this mission+character (chronological order)
+        const saved = (missionMemory[currentMission] && missionMemory[currentMission].chats && missionMemory[currentMission].chats[character.id]) || [];
+        saved.forEach(msg => {
+            addChatMessage(msg.text, msg.sender);
+        });
+    }
 }
 
 function showCharacterDetail(character, evidenceArray) {
@@ -366,8 +401,19 @@ function showEvidenceReport(evidenceArray) {
 }
 
 function backToTimeline() {
+    // hide chat interface and clear chat memory for the mission (messages persist only while in mission)
+    const chatInterface = document.getElementById('chat-interface');
+    if (chatInterface) {
+        chatInterface.style.display = 'none';
+        chatInterface.dataset.currentCharacter = '';
+        chatInterface.dataset.characterName = '';
+    }
+    if (currentMission && missionMemory[currentMission] && missionMemory[currentMission].chats) {
+        delete missionMemory[currentMission].chats;
+    }
     document.getElementById('game-area').style.display = 'none';
     document.getElementById('timeline').style.display = 'block';
+    currentMission = null;
 }
 
 function closeVerdict() {
@@ -409,7 +455,12 @@ function submitVerdict() {
     const correctCharName = missionsData[currentMission].characters.find(c => c.id === correctCharId).name;
     
     if (selectedCharId === correctCharId) {
-        showNotification('Correct Verdict!', `You correctly identified ${correctCharName} as guilty. Hearts remaining: ${hearts}`);
+        // Mark mission as completed
+        missionMemory[currentMission].completed = true;
+        markMissionCompleted(currentMission);
+        
+        // Show completion modal instead of notification
+        showMissionComplete(`You correctly identified ${correctCharName} as guilty!`);
     } else {
         const wrongCharName = missionsData[currentMission].characters.find(c => c.id === selectedCharId).name;
         showNotification('Incorrect Verdict', `You accused ${wrongCharName}, but the guilty party was ${correctCharName}. You lost a heart!`);
@@ -448,6 +499,194 @@ function closeNotification() {
     modal.classList.remove('active');
 }
 
+function showMissionComplete(message) {
+    const modal = document.getElementById('mission-complete-modal');
+    document.getElementById('complete-message').textContent = message;
+    modal.classList.add('active');
+}
+
+function markMissionCompleted(missionId) {
+    const missionBox = document.querySelector(`.mission-box[data-mission="${missionId}"]`);
+    if (missionBox) {
+        missionBox.classList.add('completed');
+    }
+}
+
+function returnToTimeline() {
+    const modal = document.getElementById('mission-complete-modal');
+    modal.classList.remove('active');
+    backToTimeline();
+}
+
+function sendChatMessage() {
+    const chatInput = document.getElementById('chat-input');
+    const message = chatInput.value.trim();
+    
+    if (!message) return;
+    
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInterface = document.getElementById('chat-interface');
+    const characterName = chatInterface.dataset.characterName;
+    const characterId = chatInterface.dataset.currentCharacter;
+    
+    // Add user message
+    addChatMessage(message, 'user');
+    // persist user message for this mission + character
+    if (missionMemory[currentMission] && missionMemory[currentMission].chats) {
+        const arr = missionMemory[currentMission].chats[characterId] || [];
+        arr.push({ sender: 'user', text: message, ts: Date.now() });
+        missionMemory[currentMission].chats[characterId] = arr;
+    }
+    chatInput.value = '';
+    
+    // Get character response from AI model or fallback
+    getCharacterResponseFromAI(characterId, message).then(response => {
+        if (response) {
+            addChatMessage(response, 'character');
+            // persist character response
+            if (missionMemory[currentMission] && missionMemory[currentMission].chats) {
+                const arr = missionMemory[currentMission].chats[characterId] || [];
+                arr.push({ sender: 'character', text: response, ts: Date.now() });
+                missionMemory[currentMission].chats[characterId] = arr;
+            }
+        }
+    }).catch(error => {
+        console.error('Error getting character response:', error);
+        const fallbackResponse = getCharacterResponseFallback(characterId);
+        addChatMessage(fallbackResponse, 'character');
+        if (missionMemory[currentMission] && missionMemory[currentMission].chats) {
+            const arr = missionMemory[currentMission].chats[characterId] || [];
+            arr.push({ sender: 'character', text: fallbackResponse, ts: Date.now() });
+            missionMemory[currentMission].chats[characterId] = arr;
+        }
+    });
+}
+
+function addChatMessage(text, sender) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat-message ${sender}`;
+    messageEl.textContent = text;
+    // Prepend so newest messages appear at the visual bottom (using column-reverse layout)
+    chatMessages.prepend(messageEl);
+    
+    // With column-reverse layout, set scrollTop to 0 to keep newest visible
+    try { chatMessages.scrollTop = 0; } catch (e) { /* ignore */ }
+}
+
+// Character AI Integration System
+// This system supports integration with external AI models for character responses
+const characterProfiles = {
+    'char1': {
+        name: 'Detective Morgan',
+        persona: 'experienced-investigator',
+        systemPrompt: 'You are Detective Morgan, a senior detective with 20 years of experience. You are experienced, methodical, and defensive when questioned about sensitive matters.',
+        traits: ['experienced', 'defensive', 'professional', 'somewhat-guarded'],
+        communicationStyle: 'formal-and-measured'
+    },
+    'char2': {
+        name: 'Guard Jenkins',
+        persona: 'security-professional',
+        systemPrompt: 'You are Guard Jenkins, a night security guard with a clean record. You are straightforward, honest, and professional in your duties.',
+        traits: ['honest', 'straightforward', 'vigilant', 'professional'],
+        communicationStyle: 'friendly-and-direct'
+    },
+    'char3': {
+        name: 'Curator Webb',
+        persona: 'art-expert',
+        systemPrompt: 'You are Curator Webb, a museum curator with deep expertise in artifacts. You are passionate about the collection and defensive about its security and preservation.',
+        traits: ['passionate', 'knowledgeable', 'protective', 'articulate'],
+        communicationStyle: 'educated-and-passionate'
+    }
+};
+
+// Configuration for AI Model Integration
+const aiModelConfig = {
+    enabled: false,  // Set to true when your AI model is ready
+    apiEndpoint: null,  // Set to your AI service endpoint
+    defaultTimeout: 5000,  // 5 second timeout for AI responses
+    fallbackResponses: true  // Use fallback responses if AI service fails
+};
+
+// Function to send message to AI model for character response
+async function getCharacterResponseFromAI(characterId, userMessage) {
+    const character = characterProfiles[characterId];
+    
+    if (!character) {
+        return getCharacterResponseFallback(characterId);
+    }
+    
+    if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) {
+        return getCharacterResponseFallback(characterId);
+    }
+    
+    try {
+        const response = await fetch(aiModelConfig.apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                characterId: characterId,
+                characterName: character.name,
+                systemPrompt: character.systemPrompt,
+                persona: character.persona,
+                traits: character.traits,
+                communicationStyle: character.communicationStyle,
+                userMessage: userMessage,
+                context: {
+                    missionId: currentMission,
+                    missionTitle: missionsData[currentMission].title
+                }
+            }),
+            timeout: aiModelConfig.defaultTimeout
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.response || getCharacterResponseFallback(characterId);
+        } else {
+            return aiModelConfig.fallbackResponses ? getCharacterResponseFallback(characterId) : null;
+        }
+    } catch (error) {
+        console.warn('AI model request failed:', error);
+        return aiModelConfig.fallbackResponses ? getCharacterResponseFallback(characterId) : null;
+    }
+}
+
+// Fallback responses for when AI model is not available
+function getCharacterResponseFallback(characterId) {
+    const fallbackResponses = {
+        'char1': [
+            'I don\'t appreciate these accusations. I have nothing to hide.',
+            'You need more evidence before you can prove anything.',
+            'I\'ve been doing this job for twenty years with a clean record.',
+            'I don\'t know what you\'re implying, but I want a lawyer.'
+        ],
+        'char2': [
+            'I was just doing my security rounds as usual.',
+            'I have no idea what you\'re talking about.',
+            'My job is to protect the building, not steal from it.',
+            'I\'ve never had any trouble before this incident.'
+        ],
+        'char3': [
+            'This collection means everything to me. I would never harm it.',
+            'I love these artifacts more than anyone else does.',
+            'The security breach must have been an inside job.',
+            'I\'ve dedicated my life to preserving these pieces.'
+        ]
+    };
+    
+    const responses = fallbackResponses[characterId] || [
+        'I\'m not sure what you mean by that.',
+        'Can you elaborate on that question?',
+        'That\'s an interesting observation.',
+        'I don\'t have anything to say about that.'
+    ];
+    
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
 // Wire up all modal handlers and initialize page
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize game page if on game page
@@ -467,5 +706,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mClose) mClose.addEventListener('click', closeMissionDetails);
     const mModal = document.getElementById('mission-details-modal');
     if (mModal) mModal.addEventListener('click', (e) => { if (e.target === mModal) closeMissionDetails(); });
+    
+    // Wire up mission complete modal close handlers (clicking outside closes it)
+    const completeModal = document.getElementById('mission-complete-modal');
+    if (completeModal) {
+        completeModal.addEventListener('click', (e) => {
+            if (e.target === completeModal) returnToTimeline();
+        });
+    }
 });
 
