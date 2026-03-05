@@ -2,10 +2,6 @@ name = "verity"
 main = "src/index.js"
 compatibility_date = "2026-03-01"
 
-# Static assets directory (HTML, CSS, JS files)
-[env.production]
-public = "."
-
 # AI binding for Cloudflare's AI models (free tier available)
 [ai]
 binding = "AI"
