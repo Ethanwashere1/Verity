@@ -4,8 +4,8 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
-    if (request.method === 'POST' && url.pathname === '/api/ai') {
+    // && url.pathname === '/api/ai'
+    if (request.method === 'POST') {
       try {
         const body = await request.json();
         const { requestType } = body;
