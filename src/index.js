@@ -38,6 +38,6 @@ export default {
     }
 
     // For everything else you could return static assets or a 404.
-    return new Response('Not Found', { status: 404 });
+    return new Response('Found', { status: 404 });
   }
 };
