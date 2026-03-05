@@ -8,9 +8,9 @@ const missionsData = {
         scenario: 'The theft occurred during the night shift on March 15th. Security footage was disabled.',
         correctCharacter: 'char1',
         characters: [
-            { id: 'char1', name: 'Detective Morgan', bio: 'Senior detective with 20 years experience. Recently passed over for promotion.', image: '../Assets/Prisoner 1 SVG.svg', unethical: true },
-            { id: 'char2', name: 'Guard Jenkins', bio: 'Night security guard. Has a clean record and excellent attendance.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false },
-            { id: 'char3', name: 'Curator Webb', bio: 'Museum curator and expert in ancient artifacts. Loves the collection.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false }
+            { id: 'char1', name: 'Detective Morgan', bio: 'Senior detective with 20 years experience. Recently passed over for promotion.', image: 'Assets/Prisoner 1 SVG.svg', unethical: true },
+            { id: 'char2', name: 'Guard Jenkins', bio: 'Night security guard. Has a clean record and excellent attendance.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false },
+            { id: 'char3', name: 'Curator Webb', bio: 'Museum curator and expert in ancient artifacts. Loves the collection.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false }
         ],
         evidence: [
             { title: 'Photo', content: 'Security camera shows masked individual entering artifact vault at 2:47 AM.' },
@@ -24,9 +24,9 @@ const missionsData = {
         scenario: 'Missing funds were transferred to offshore accounts over the past 6 months. Three executives have access.',
         correctCharacter: 'char2',
         characters: [
-            { id: 'char1', name: 'Sarah Chen', bio: 'VP of Operations. Joined company 3 years ago with impeccable credentials.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false },
-            { id: 'char2', name: 'Marcus Davis', bio: 'CFO and long-time employee. Recently dealing with serious personal financial issues.', image: '../Assets/Prisoner 1 SVG.svg', unethical: true },
-            { id: 'char3', name: 'Lisa Park', bio: 'Accounting Director. Mother of two, stable family life, devoted to company.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false }
+            { id: 'char1', name: 'Sarah Chen', bio: 'VP of Operations. Joined company 3 years ago with impeccable credentials.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false },
+            { id: 'char2', name: 'Marcus Davis', bio: 'CFO and long-time employee. Recently dealing with serious personal financial issues.', image: 'Assets/Prisoner 1 SVG.svg', unethical: true },
+            { id: 'char3', name: 'Lisa Park', bio: 'Accounting Director. Mother of two, stable family life, devoted to company.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false }
         ],
         evidence: [
             { title: 'Bank Records', content: 'Offshore account opened under shell company linked to CFO\'s offshore address.' },
@@ -40,9 +40,9 @@ const missionsData = {
         scenario: 'Victim was poisoned with arsenic at a business dinner. Three business rivals attended the event.',
         correctCharacter: 'char3',
         characters: [
-            { id: 'char1', name: 'Robert Trump', bio: 'Rival businessman. Outcompeted by victim in multiple deals recently.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false },
-            { id: 'char2', name: 'Victoria Stone', bio: 'Business partner with grudge. Lost $500K deal to victim last month.', image: '../Assets/Prisoner 1 SVG.svg', unethical: false },
-            { id: 'char3', name: 'James Norton', bio: 'Disgruntled ex-partner. Victim ended partnership and took clients.', image: '../Assets/Prisoner 1 SVG.svg', unethical: true }
+            { id: 'char1', name: 'Robert Trump', bio: 'Rival businessman. Outcompeted by victim in multiple deals recently.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false },
+            { id: 'char2', name: 'Victoria Stone', bio: 'Business partner with grudge. Lost $500K deal to victim last month.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false },
+            { id: 'char3', name: 'James Norton', bio: 'Disgruntled ex-partner. Victim ended partnership and took clients.', image: 'Assets/Prisoner 1 SVG.svg', unethical: true }
         ],
         evidence: [
             { title: 'Toxicology Report', content: 'Arsenic detected in victim\'s wine glass. Rare strain traceable to specific source.' },
