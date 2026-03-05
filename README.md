@@ -26,10 +26,14 @@ keys in the client-side code.
    * **report_analysis** – when the player submits a verdict/justification the
      text is sent to the AI for a review to ensure all critical evidence has
      been covered.  The result is shown in a notification.
-2. The Cloudflare Worker (in `src/index.js`) receives that POST request.
+2. The Cloudflare Worker (in `src/index.js`) receives that POST request. It
+   also serves static assets (the entire `public/` directory) so the same
+   worker can host the HTML/CSS/JS for the game.  `index.html` is your
+   landing page; other files are linked relative to it.
 3. The worker attaches the secret API key stored in the environment (via
    `wrangler secret put AI_API_KEY`) and forwards the request to the real
-   AI provider endpoint.  The response is streamed back to the browser.
+   AI provider endpoint (or uses the built‑in Cloudflare AI binding).  The
+   response is streamed back to the browser.
 
 ## Security considerations
 

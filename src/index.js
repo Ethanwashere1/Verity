@@ -1,6 +1,6 @@
 // Cloudflare Worker for AI proxy using Cloudflare AI bindings
 // Handles character chat, prompt suggestions, and report analysis
-/*
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -30,41 +30,16 @@ export default {
       }
     }
 
-    return new Response('Not Found', { status: 404 });
-  }
-};
-*/
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-
-    // 1. Handle AI Chat (POST requests)
-    if (request.method === "POST") {
-      try {
-        const data = await request.json();
-        const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
-          messages: [
-            { role: 'system', content: 'You are Verity, a helpful AI assistant.' },
-            { role: 'user', content: data.prompt }
-          ]
-        });
-        return new Response(JSON.stringify(aiResponse), {
-          headers: { "Content-Type": "application/json" }
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: e.message }), { status: 500 });
-      }
-    }
-
-    // 2. Handle the Website (GET requests)
-    // This tells the Worker: "If it's not a POST, try to show the HTML files"
+    // not an AI call; try to serve a static asset from the public folder
+    // the assets binding is automatically created from `[assets]` in wrangler.toml
     try {
       return await env.ASSETS.fetch(request);
-    } catch (e) {
-      return new Response("Still Not Found. Check if your 'public' folder has an 'index.html' file!", { status: 404 });
+    } catch (_) {
+      return new Response('Not Found', { status: 404 });
     }
   }
 };
+
 async function handleCharacterChat({ characterId, characterName, persona, traits, communicationStyle, missionId, missionTitle, conversationHistory }, env) {
   const systemPrompt = `You are ${characterName}, a character in the mission "${missionTitle}". Your persona: ${persona}. Traits: ${traits.join(', ')}. Communication style: ${communicationStyle}. Respond in character, staying true to your role. Keep responses concise.`;
 

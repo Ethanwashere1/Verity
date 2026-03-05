@@ -5,3 +5,7 @@ compatibility_date = "2026-03-01"
 # AI binding for Cloudflare's AI models (free tier available)
 [ai]
 binding = "AI"
+
+[assets]
+directory = "./public"
+ignore = ["node_modules/*"]
