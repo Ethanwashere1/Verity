@@ -1,0 +1,13 @@
+name = "verity"
+main = "src/index.js"
+compatibility_date = "2026-03-01"
+
+# To avoid committing secrets, use `wrangler secret put AI_API_KEY`.
+# You can also bind additional variables such as the real endpoint if you
+# need it to be configurable at deploy time:
+#
+# [vars]
+# AI_API_ENDPOINT = "https://api.openai.com/v1/chat/completions"
+
+# if you prefer to use a .jsonc config for wrangler you can rename
+# temp-config.jsonc or copy this content into that file.

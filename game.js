@@ -92,9 +92,25 @@ function initGamePage() {
     const chatSend = document.getElementById('chat-send');
     if (chatSend) chatSend.addEventListener('click', sendChatMessage);
     const chatInput = document.getElementById('chat-input');
-    if (chatInput) chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendChatMessage();
-    });
+    if (chatInput) {
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendChatMessage();
+        });
+        // as the user types, optionally ask the AI for a better prompt
+        let suggestionTimer;
+        chatInput.addEventListener('input', () => {
+            clearTimeout(suggestionTimer);
+            suggestionTimer = setTimeout(() => {
+                const text = chatInput.value.trim();
+                const characterId = document.getElementById('chat-interface').dataset.currentCharacter;
+                if (text && characterId) {
+                    getPromptSuggestion(text, characterId).then(displayPromptSuggestion);
+                } else {
+                    displayPromptSuggestion('');
+                }
+            }, 500);
+        });
+    }
 }
 
 function showMission(id) {
@@ -231,6 +247,8 @@ function selectCharacter(character, evidenceArray) {
         saved.forEach(msg => {
             addChatMessage(msg.text, msg.sender);
         });
+        // clear any leftover prompt suggestion from previous conversation
+        displayPromptSuggestion('');
     }
 }
 
@@ -408,9 +426,9 @@ function backToTimeline() {
         chatInterface.dataset.currentCharacter = '';
         chatInterface.dataset.characterName = '';
     }
-    if (currentMission && missionMemory[currentMission] && missionMemory[currentMission].chats) {
-        delete missionMemory[currentMission].chats;
-    }
+    displayPromptSuggestion('');
+    // keep conversation history around so the AI instances remain intact if
+    // player revisits the same mission during this session
     document.getElementById('game-area').style.display = 'none';
     document.getElementById('timeline').style.display = 'block';
     currentMission = null;
@@ -435,14 +453,29 @@ function updateHearts() {
     }
 }
 
-function submitVerdict() {
+async function submitVerdict() {
     const verdictSelect = document.getElementById('verdict-select');
     const verdictJust = document.getElementById('verdict-just');
+    const warningDiv = document.getElementById('verdict-warning');
     const selectedCharId = verdictSelect.value;
     const justification = verdictJust.value.trim();
 
+    // clear previous warning
+    if (warningDiv) {
+        warningDiv.style.display = 'none';
+        warningDiv.textContent = '';
+    }
+
     if (!selectedCharId || !justification) {
-        showNotification('Incomplete Verdict', 'Please select a character and provide justification.');
+        // show inline warning instead of modal so the game remains visible
+        if (warningDiv) {
+            let msg = 'Please ';
+            if (!selectedCharId && !justification) msg += 'choose a suspect and enter your justification.';
+            else if (!selectedCharId) msg += 'choose a suspect.';
+            else msg += 'provide your justification.';
+            warningDiv.textContent = msg;
+            warningDiv.style.display = 'block';
+        }
         return;
     }
 
@@ -454,16 +487,20 @@ function submitVerdict() {
     const correctCharId = missionsData[currentMission].correctCharacter;
     const correctCharName = missionsData[currentMission].characters.find(c => c.id === correctCharId).name;
     
+// ask AI to review the justification/report
+    const analysis = await analyzeReport(selectedCharId, justification);
+    let analysisText = analysis ? `\n\nAI review: ${analysis}` : '';
+
     if (selectedCharId === correctCharId) {
         // Mark mission as completed
         missionMemory[currentMission].completed = true;
         markMissionCompleted(currentMission);
         
-        // Show completion modal instead of notification
-        showMissionComplete(`You correctly identified ${correctCharName} as guilty!`);
+        // Show completion modal with appended analysis
+        showMissionComplete(`You correctly identified ${correctCharName} as guilty!${analysisText}`);
     } else {
         const wrongCharName = missionsData[currentMission].characters.find(c => c.id === selectedCharId).name;
-        showNotification('Incorrect Verdict', `You accused ${wrongCharName}, but the guilty party was ${correctCharName}. You lost a heart!`);
+        showNotification('Incorrect Verdict', `You accused ${wrongCharName}, but the guilty party was ${correctCharName}. You lost a heart!${analysisText}`);
         deductHeart();
     }
 
@@ -490,7 +527,8 @@ function closeMissionDetails() {
 function showNotification(title, message) {
     const modal = document.getElementById('notification-modal');
     document.getElementById('notification-title').textContent = title;
-    document.getElementById('notification-message').textContent = message;
+    const msgEl = document.getElementById('notification-message');
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
     modal.classList.add('active');
 }
 
@@ -501,7 +539,9 @@ function closeNotification() {
 
 function showMissionComplete(message) {
     const modal = document.getElementById('mission-complete-modal');
-    document.getElementById('complete-message').textContent = message;
+    const msgEl = document.getElementById('complete-message');
+    // convert line breaks to <br> so multi‑line messages (analysis, etc.) show
+    msgEl.innerHTML = message.replace(/\n/g, '<br>');
     modal.classList.add('active');
 }
 
@@ -518,7 +558,52 @@ function returnToTimeline() {
     backToTimeline();
 }
 
-function sendChatMessage() {
+function displayPromptSuggestion(text) {
+    const box = document.getElementById('prompt-suggestion');
+    if (box) {
+        box.textContent = text;
+        box.style.display = text ? 'block' : 'none';
+    }
+}
+
+async function getPromptSuggestion(userMessage, characterId) {
+    if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) return '';
+    try {
+        const data = await postToAI({
+            requestType: 'prompt_suggestion',
+            characterId,
+            missionId: currentMission,
+            userMessage
+        });
+        return data.suggestion || '';
+    } catch (e) {
+        console.warn('prompt suggestion failed', e);
+        return '';
+    }
+}
+
+async function analyzeReport(characterId, justification) {
+    if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) return null;
+    try {
+        const mission = missionsData[currentMission];
+        const history = missionMemory[currentMission]?.chats?.[characterId] || [];
+        const data = await postToAI({
+            requestType: 'report_analysis',
+            missionId: currentMission,
+            missionTitle: mission.title,
+            characterId,
+            justification,
+            conversationHistory: history,
+            missionData: mission
+        });
+        return data.analysis || null;
+    } catch (e) {
+        console.warn('report analysis failed', e);
+        return null;
+    }
+}
+
+async function sendChatMessage() {
     const chatInput = document.getElementById('chat-input');
     const message = chatInput.value.trim();
     
@@ -538,6 +623,9 @@ function sendChatMessage() {
         missionMemory[currentMission].chats[characterId] = arr;
     }
     chatInput.value = '';
+
+    // ask AI for a prompt improvement suggestion and display it
+    getPromptSuggestion(message, characterId).then(displayPromptSuggestion);
     
     // Get character response from AI model or fallback
     getCharacterResponseFromAI(characterId, message).then(response => {
@@ -601,53 +689,70 @@ const characterProfiles = {
 };
 
 // Configuration for AI Model Integration
+// NOTE: the frontend must never contain the API key directly.  Instead
+// we proxy requests through a Cloudflare Worker that adds the secret from
+// env vars.  The worker is defined under `src/index.js` and the key is
+// configured via `wrangler secret put AI_API_KEY` (or similar).
+//
+// The worker is dumb and just proxies whatever JSON we send.  the
+// different helper functions below build bodies suited to each task
+// (character chat, prompt suggestion, report review).
 const aiModelConfig = {
-    enabled: false,  // Set to true when your AI model is ready
-    apiEndpoint: null,  // Set to your AI service endpoint
+    enabled: true,  // Set to true when your AI model is ready
+    // point at our own worker; the worker will forward to the real AI
+    // endpoint using a secret key stored in the Cloudflare environment
+    apiEndpoint: '/api/ai',
     defaultTimeout: 5000,  // 5 second timeout for AI responses
     fallbackResponses: true  // Use fallback responses if AI service fails
 };
 
 // Function to send message to AI model for character response
+// generic POST helper that goes through the worker proxy
+async function postToAI(body) {
+    const resp = await fetch(aiModelConfig.apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        timeout: aiModelConfig.defaultTimeout
+    });
+    if (!resp.ok) throw new Error(`AI proxy returned ${resp.status}`);
+    return resp.json();
+}
+
 async function getCharacterResponseFromAI(characterId, userMessage) {
     const character = characterProfiles[characterId];
-    
-    if (!character) {
-        return getCharacterResponseFallback(characterId);
-    }
-    
+    if (!character) return getCharacterResponseFallback(characterId);
     if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) {
         return getCharacterResponseFallback(characterId);
     }
-    
+
+    // build conversation history for this character (so each char is a
+    // persistent AI instance within a mission).  The worker/backend can
+    // use this to maintain a context window.
+    const history = [];
+    // include hidden system prompt / story context first
+    history.push({ role: 'system', content: character.systemPrompt });
+
+    const saved = missionMemory[currentMission]?.chats?.[characterId] || [];
+    saved.forEach(msg => {
+        history.push({ role: msg.sender === 'user' ? 'user' : 'assistant', content: msg.text });
+    });
+    // include the new user message as well
+    history.push({ role: 'user', content: userMessage });
+
     try {
-        const response = await fetch(aiModelConfig.apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                characterId: characterId,
-                characterName: character.name,
-                systemPrompt: character.systemPrompt,
-                persona: character.persona,
-                traits: character.traits,
-                communicationStyle: character.communicationStyle,
-                userMessage: userMessage,
-                context: {
-                    missionId: currentMission,
-                    missionTitle: missionsData[currentMission].title
-                }
-            }),
-            timeout: aiModelConfig.defaultTimeout
+        const data = await postToAI({
+            requestType: 'character_chat',
+            characterId,
+            characterName: character.name,
+            persona: character.persona,
+            traits: character.traits,
+            communicationStyle: character.communicationStyle,
+            missionId: currentMission,
+            missionTitle: missionsData[currentMission].title,
+            conversationHistory: history
         });
-        
-        if (response.ok) {
-            const data = await response.json();
-            return data.response || getCharacterResponseFallback(characterId);
-        } else {
-            return aiModelConfig.fallbackResponses ? getCharacterResponseFallback(characterId) : null;
-        }
+        return data.response || getCharacterResponseFallback(characterId);
     } catch (error) {
         console.warn('AI model request failed:', error);
         return aiModelConfig.fallbackResponses ? getCharacterResponseFallback(characterId) : null;

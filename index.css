@@ -577,6 +577,29 @@ header {
 }
 
 .chat-message.user {
+    background: #1a7a8f;}
+
+/* inline warning text shown inside verdict modal without dark overlay */
+.warning {
+    color: #f66;
+    font-size: 13px;
+    background: rgba(255,0,0,0.1);
+    padding: 6px;
+    border-radius: 4px;
+}
+
+/* suggestion box shown under chat input with small italic text */
+.prompt-suggestion {
+    padding: 4px 8px;
+    font-size: 12px;
+    font-style: italic;
+    color: #ccc;
+    background: rgba(0,0,0,0.5);
+    border-radius: 4px;
+    margin-top: 4px;
+}
+
+.chat-message.user {
     background: #1a7a8f;
     color: #fff;
     margin-left: auto;

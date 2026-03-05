@@ -66,6 +66,7 @@
                         <input type="text" id="chat-input" placeholder="Ask the character a question..." class="chat-input">
                         <button id="chat-send" class="chat-send-btn">Send</button>
                     </div>
+                    <div id="prompt-suggestion" class="prompt-suggestion" style="display:none;"></div>
                 </div>
             </div>
         </div>
@@ -110,6 +111,8 @@
                 </select>
                 <label for="verdict-just">Justification:</label>
                 <textarea id="verdict-just" rows="5" style="width:100%"></textarea>
+                <!-- inline validation warning (shown when missing info) -->
+                <div id="verdict-warning" class="warning" style="display:none; margin-top:8px;"></div>
                 <div style="margin-top:10px;text-align:right;">
                     <button id="verdict-submit">Submit</button>
                 </div>
