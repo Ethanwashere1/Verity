@@ -1,0 +1,14 @@
+{
+  "name": "verity",
+  "version": "1.0.0",
+  "description": "An interactive detective game with Cloudflare AI",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "keywords": ["game", "cloudflare", "workers", "ai"],
+  "author": "",
+  "license": "MIT"
+}
