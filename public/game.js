@@ -283,7 +283,7 @@ function showCharacterDetail(character, evidenceArray) {
     header.style.left = '0';
     header.style.right = '0';
     header.style.zIndex = '10';
-    header.style.background = 'linear-gradient(90deg, rgba(20,20,28,0.98), rgba(20,20,28,0.95))';
+    header.style.background = 'linear-gradient(90deg, rgba(10, 4, 21, 0.8), #13102f)';
     header.style.padding = '20px';
     header.style.borderRadius = '0';
     header.style.backdropFilter = 'blur(10px)';
@@ -295,7 +295,7 @@ function showCharacterDetail(character, evidenceArray) {
     h.textContent = character.name;
     h.style.margin = '0 0 8px 0';
     h.style.fontSize = '28px';
-    h.style.color = '#6cf';
+    h.style.color = '#d946a6';
     
     const bio = document.createElement('p');
     bio.textContent = character.bio;
@@ -351,7 +351,7 @@ function showEvidenceReport(evidenceArray) {
     header.style.left = '0';
     header.style.right = '0';
     header.style.zIndex = '10';
-    header.style.background = 'linear-gradient(90deg, rgba(20,20,28,0.98), rgba(20,20,28,0.95))';
+    header.style.background = 'linear-gradient(90deg, rgba(10, 4, 21, 0.8), #13102f)';
     header.style.padding = '20px';
     header.style.borderRadius = '0';
     header.style.backdropFilter = 'blur(10px)';
@@ -361,7 +361,8 @@ function showEvidenceReport(evidenceArray) {
     h.textContent = 'Additional Evidence Report';
     h.style.margin = '0';
     h.style.fontSize = '28px';
-    h.style.color = '#6cf';
+    h.style.color = '#d946a6';
+    h.style.textShadow = '0 0 10px rgba(217, 70, 166, 0.5)';
     
     header.appendChild(h);
     right.appendChild(header);
@@ -377,19 +378,21 @@ function showEvidenceReport(evidenceArray) {
     
     const report = document.createElement('div');
     report.style.textAlign = 'left';
-    report.style.background = 'rgba(14,14,16,0.9)';
-    report.style.padding = '20px';
-    report.style.borderRadius = '8px';
+    report.style.background = 'linear-gradient(180deg, rgba(14,14,16,0.9), rgba(20,20,24,0.9))';
+    report.style.padding = '24px';
+    report.style.borderRadius = '12px';
     report.style.color = '#ddd';
-    report.style.backdropFilter = 'blur(10px)';
+    report.style.backdropFilter = 'blur(15px)';
     report.style.maxWidth = '600px';
     report.style.width = '100%';
+    report.style.border = '1px solid rgba(217, 70, 166, 0.2)';
+    report.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
     
     evidenceArray.forEach((ev, idx) => {
         const item = document.createElement('div');
-        item.style.marginBottom = '20px';
-        item.style.paddingBottom = '15px';
-        item.style.borderBottom = '1px solid #444';
+        item.style.marginBottom = '24px';
+        item.style.paddingBottom = '18px';
+        item.style.borderBottom = '1px solid rgba(217, 70, 166, 0.3)';
         
         if (idx === evidenceArray.length - 1) {
             item.style.borderBottom = 'none';
@@ -400,14 +403,18 @@ function showEvidenceReport(evidenceArray) {
         const itemTitle = document.createElement('h3');
         itemTitle.textContent = `${idx+1}. ${ev.title}`;
         itemTitle.style.fontSize = '18px';
-        itemTitle.style.margin = '0 0 10px 0';
-        itemTitle.style.color = '#6cf';
+        itemTitle.style.margin = '0 0 12px 0';
+        itemTitle.style.color = '#d946a6';
+        itemTitle.style.fontWeight = '600';
         
         const itemContent = document.createElement('p');
         itemContent.textContent = ev.content;
         itemContent.style.margin = '0';
         itemContent.style.fontSize = '14px';
         itemContent.style.lineHeight = '1.6';
+        itemContent.style.color = '#ddd';
+        
+        item.appendChild(itemTitle);
         itemContent.style.color = '#ddd';
         
         item.appendChild(itemTitle);
@@ -487,9 +494,17 @@ async function submitVerdict() {
     const correctCharId = missionsData[currentMission].correctCharacter;
     const correctCharName = missionsData[currentMission].characters.find(c => c.id === correctCharId).name;
     
-// ask AI to review the justification/report
-    const analysis = await analyzeReport(selectedCharId, justification);
-    let analysisText = analysis ? `\n\nAI review: ${analysis}` : '';
+    // ask AI to review the justification/report
+    const reportData = await analyzeReport(selectedCharId, justification);
+    let analysisText = reportData.analysis ? `\n\nAI Review: ${reportData.analysis}` : '';
+    
+    // Show weak justification notification only for correct verdicts (they can still win but should improve)
+    if (reportData.analysisQuality === 'unsatisfactory' && selectedCharId === correctCharId) {
+        showNotification(
+            'Weak Justification',
+            'You identified the correct suspect, but your justification was not thorough. Consider gathering more evidence and asking more targeted questions in future missions.'
+        );
+    }
 
     if (selectedCharId === correctCharId) {
         // Mark mission as completed
@@ -500,7 +515,15 @@ async function submitVerdict() {
         showMissionComplete(`You correctly identified ${correctCharName} as guilty!${analysisText}`);
     } else {
         const wrongCharName = missionsData[currentMission].characters.find(c => c.id === selectedCharId).name;
-        showNotification('Incorrect Verdict', `You accused ${wrongCharName}, but the guilty party was ${correctCharName}. You lost a heart!${analysisText}`);
+        
+        // For incorrect verdicts, show the analysis and ethics issues if any
+        let errorMsg = `You accused ${wrongCharName}, but the guilty party was ${correctCharName}. You lost a heart!`;
+        if (reportData.ethicsIssues) {
+            errorMsg += `\n⚠️ ${reportData.ethicsIssues}`;
+        }
+        errorMsg += analysisText;
+        
+        showNotification('Incorrect Verdict', errorMsg);
         deductHeart();
     }
 
@@ -573,9 +596,18 @@ async function getPromptSuggestion(userMessage, characterId) {
             requestType: 'prompt_suggestion',
             characterId,
             missionId: currentMission,
-            userMessage
+            userMessage,
+            ethicsCheck: true  // Request ethics analysis
         });
-        return data.suggestion || '';
+        
+        let suggestion = data.suggestion || '';
+        
+        // Check for ethical violations in the user's message
+        if (data.ethicsViolation) {
+            suggestion += '\n⚠️ ' + data.ethicsViolation;
+        }
+        
+        return suggestion;
     } catch (e) {
         console.warn('prompt suggestion failed', e);
         return '';
@@ -583,7 +615,9 @@ async function getPromptSuggestion(userMessage, characterId) {
 }
 
 async function analyzeReport(characterId, justification) {
-    if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) return null;
+    if (!aiModelConfig.enabled || !aiModelConfig.apiEndpoint) {
+        return { analysis: null, analysisQuality: null };
+    }
     try {
         const mission = missionsData[currentMission];
         const history = missionMemory[currentMission]?.chats?.[characterId] || [];
@@ -596,10 +630,16 @@ async function analyzeReport(characterId, justification) {
             conversationHistory: history,
             missionData: mission
         });
-        return data.analysis || null;
+        
+        // Return the full response object with analysis, quality, and ethics issues
+        return {
+            analysis: data.analysis || null,
+            analysisQuality: data.analysisQuality || null,
+            ethicsIssues: data.ethicsIssues || null
+        };
     } catch (e) {
         console.warn('report analysis failed', e);
-        return null;
+        return { analysis: null, analysisQuality: null };
     }
 }
 
@@ -624,11 +664,20 @@ async function sendChatMessage() {
     }
     chatInput.value = '';
 
+    // Show typing indicator
+    const typingIndicatorEl = document.createElement('div');
+    typingIndicatorEl.className = 'chat-message character typing-message';
+    typingIndicatorEl.innerHTML = '<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+    chatMessages.prepend(typingIndicatorEl);
+
     // ask AI for a prompt improvement suggestion and display it
     getPromptSuggestion(message, characterId).then(displayPromptSuggestion);
     
     // Get character response from AI model or fallback
     getCharacterResponseFromAI(characterId, message).then(response => {
+        // Remove typing indicator
+        typingIndicatorEl.remove();
+        
         if (response) {
             addChatMessage(response, 'character');
             // persist character response
@@ -639,6 +688,9 @@ async function sendChatMessage() {
             }
         }
     }).catch(error => {
+        // Remove typing indicator
+        typingIndicatorEl.remove();
+        
         console.error('Error getting character response:', error);
         const fallbackResponse = getCharacterResponseFallback(characterId);
         addChatMessage(fallbackResponse, 'character');

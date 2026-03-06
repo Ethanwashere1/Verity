@@ -1,7 +1,27 @@
 // index.js - global page scripts
 document.addEventListener('DOMContentLoaded', () => {
 	runTypewriter();
+	initScrollIndicator();
 });
+
+function initScrollIndicator() {
+	const indicator = document.querySelector('.scroll-indicator');
+	if (!indicator) return;
+	
+	// Hide scroll indicator when user scrolls down
+	window.addEventListener('scroll', () => {
+		if (window.scrollY > 100) {
+			indicator.style.display = 'none';
+		} else {
+			indicator.style.display = 'block';
+		}
+	});
+	
+	// Click to scroll down
+	indicator.addEventListener('click', () => {
+		window.scrollBy({ top: 500, behavior: 'smooth' });
+	});
+}
 
 function runTypewriter() {
 	const container = document.querySelector('.head-container h1');
@@ -10,7 +30,7 @@ function runTypewriter() {
 	container.textContent = '';
 	container.setAttribute('aria-live', 'polite');
 	let i = 0;
-	const speed = 80; // ms per char
+	const speed = 100; // ms per char
 	const cursor = document.createElement('span');
 	cursor.className = 'type-cursor';
 	cursor.textContent = '|';
@@ -39,4 +59,3 @@ function runTypewriter() {
 
 	type();
 }
-

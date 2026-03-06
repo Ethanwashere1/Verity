@@ -10,19 +10,19 @@ export default {
         const body = await request.json();
         const { requestType } = body;
 
-        let responseText = '';
+        let response = {};
 
         if (requestType === 'character_chat') {
-          responseText = await handleCharacterChat(body, env);
+          response.response = await handleCharacterChat(body, env);
         } else if (requestType === 'prompt_suggestion') {
-          responseText = await handlePromptSuggestion(body, env);
+          response = await handlePromptSuggestion(body, env);
         } else if (requestType === 'report_analysis') {
-          responseText = await handleReportAnalysis(body, env);
+          response = await handleReportAnalysis(body, env);
         } else {
           throw new Error('Unknown request type');
         }
 
-        return new Response(JSON.stringify({ response: responseText }), {
+        return new Response(JSON.stringify(response), {
           headers: { 'content-type': 'application/json' }
         });
       } catch (err) {
@@ -49,24 +49,91 @@ async function handleCharacterChat({ characterId, characterName, persona, traits
   return aiResponse.response || 'I have nothing to say.';
 }
 
-async function handlePromptSuggestion({ characterId, missionId, userMessage }, env) {
-  const prompt = `The user asked a character in a detective game: "${userMessage}". Suggest a better, more effective way to phrase this question to get useful information. Keep it short.`;
+async function handlePromptSuggestion({ characterId, missionId, userMessage, ethicsCheck }, env) {
+  // Check for unethical behavior patterns
+  const ethicsViolations = checkForEthicsViolations(userMessage);
+  
+  const prompt = `The user asked a character in a detective game: "${userMessage}". Suggest a better, more effective way to phrase this question to get useful information. Keep it short (one sentence).`;
 
   const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', { prompt });
-  return aiResponse.response || '';
+  
+  const responseObj = {
+    suggestion: aiResponse.response || ''
+  };
+  
+  // Add ethics violation warning if detected
+  if (ethicsViolations) {
+    responseObj.ethicsViolation = ethicsViolations;
+  }
+  
+  return responseObj;
+}
+
+function checkForEthicsViolations(message) {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for bribing/coercion
+  if (/\b(bribe|pay|money|offer|reward|cash|payment|financially|blackmail|coerce|threaten|extort)\b/.test(lowerMessage)) {
+    return 'Ethical Violation: Attempting to bribe or coerce a suspect is illegal and unethical.';
+  }
+  
+  // Check for framing/false evidence
+  if (/\b(plant|fake|false|fabricat|lie|deceiv|mislead|falsif|forge)\b/.test(lowerMessage)) {
+    return 'Ethical Violation: Planting false evidence or deceiving suspects violates investigative ethics.';
+  }
+  
+  // Check for physical threats
+  if (/\b(hurt|hit|punch|beat|harm|violence|force|attack|injure)\b/.test(lowerMessage)) {
+    return 'Ethical Violation: Threatening violence is illegal and violates interrogation standards.';
+  }
+  
+  // Check for discrimination
+  if (/\b(race|racist|gender|sexist|ethnicity|ethnic|religion|religious|discriminat)\b/.test(lowerMessage)) {
+    return 'Ethical Violation: Discriminatory questioning based on protected characteristics is illegal.';
+  }
+  
+  return null;
 }
 
 async function handleReportAnalysis({ missionId, missionTitle, characterId, justification, conversationHistory, missionData }, env) {
-  const historyText = conversationHistory.map(msg => `${msg.role}: ${msg.content}`).join('\n');
-  const prompt = `Mission: ${missionTitle}. Description: ${missionData.description}. Scenario: ${missionData.scenario}. Correct suspect: ${missionData.characters.find(c => c.id === missionData.correctCharacter).name}.
+  // Check for ethics violations in the justification
+  const ethicsIssues = checkForEthicsViolations(justification);
+  
+  const historyText = conversationHistory.map(msg => `${msg.sender || msg.role}: ${msg.text || msg.content}`).join('\n');
+  const selectedCharacter = missionData.characters.find(c => c.id === characterId);
+  const correctCharacter = missionData.characters.find(c => c.id === missionData.correctCharacter);
+  
+  const qualityPrompt = `Evaluate this report quality for a detective game:
+Mission: ${missionTitle}
+Suspect Chosen: ${selectedCharacter.name}
+Justification: "${justification}"
 
-Player's report: Suspect - ${missionData.characters.find(c => c.id === characterId).name}. Justification: ${justification}.
+Rate the quality of the evidence provided (thorough, adequate, or weak). Consider:
+- Does it reference specific evidence from the case?
+- Does it address the suspect's motive and opportunity?
+- Are counterarguments to alternatives addressed?
+- Is it logically sound?
+
+Respond with ONLY one word: "thorough", "adequate", or "weak".`;
+
+  const qualityResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', { prompt: qualityPrompt });
+  const quality = (qualityResponse.response || '').toLowerCase().trim();
+  const analysisQuality = quality.includes('weak') ? 'unsatisfactory' : quality.includes('adequate') ? 'satisfactory' : 'thorough';
+  
+  const analysisPrompt = `Mission: ${missionTitle}. Description: ${missionData.description}. Scenario: ${missionData.scenario}. Correct suspect: ${correctCharacter.name}.
+
+Player's report: Suspect - ${selectedCharacter.name}. Justification: ${justification}.
 
 Conversation history:
 ${historyText}
 
-Analyze if the player's report covers all critical evidence and reasoning. Provide feedback on completeness. Keep it concise.`;
+Analyze if the player's report covers all critical evidence and reasoning. Provide brief feedback on completeness and reasoning quality. Keep it to 1-2 sentences.`;
 
-  const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', { prompt });
-  return aiResponse.response || 'Analysis unavailable.';
+  const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', { prompt: analysisPrompt });
+  
+  return {
+    analysis: aiResponse.response || 'Analysis unavailable.',
+    analysisQuality: analysisQuality,
+    ethicsIssues: ethicsIssues || undefined
+  };
 }

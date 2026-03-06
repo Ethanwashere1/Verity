@@ -76,8 +76,20 @@ function submitQuiz() {
     });
     const percent = Math.round((score / questions.length) * 100);
     document.getElementById('score-text').textContent = `You scored ${percent}% (${score}/${questions.length}).`;
-    const passText = percent >= 80 ? 'You pass - AI literate!' : 'You do not pass - more learning needed.';
+    const passText = percent >= 70 ? 'You pass - AI literate! 🎉' : 'You do not pass - more learning needed.';
     document.getElementById('pass-text').textContent = passText;
     document.getElementById('quiz-screen').style.display = 'none';
     document.getElementById('results-screen').style.display = 'block';
+    
+    // trigger confetti if user passes
+    if (percent >= 70) {
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#ff1493', '#ff69b4', '#ffffff']
+            });
+        }, 300);
+    }
 }
