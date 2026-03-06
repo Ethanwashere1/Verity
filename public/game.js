@@ -494,9 +494,29 @@ async function submitVerdict() {
     const correctCharId = missionsData[currentMission].correctCharacter;
     const correctCharName = missionsData[currentMission].characters.find(c => c.id === correctCharId).name;
     
+    // Check if notification modal exists and disable submit button during analysis
+    const verdictModal = document.getElementById('verdict-modal');
+    const submitBtn = document.getElementById('verdict-submit');
+    const originalBtnText = submitBtn?.textContent || 'Submit';
+    
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Analyzing Report...';
+        submitBtn.style.opacity = '0.6';
+        submitBtn.style.cursor = 'not-allowed';
+    }
+    
     // ask AI to review the justification/report
     const reportData = await analyzeReport(selectedCharId, justification);
     let analysisText = reportData.analysis ? `\n\nAI Review: ${reportData.analysis}` : '';
+    
+    // Re-enable submit button
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+        submitBtn.style.opacity = '1';
+        submitBtn.style.cursor = 'pointer';
+    }
     
     // Show weak justification notification only for correct verdicts (they can still win but should improve)
     if (reportData.analysisQuality === 'unsatisfactory' && selectedCharId === correctCharId) {
@@ -584,8 +604,13 @@ function returnToTimeline() {
 function displayPromptSuggestion(text) {
     const box = document.getElementById('prompt-suggestion');
     if (box) {
-        box.textContent = text;
-        box.style.display = text ? 'block' : 'none';
+        if (text) {
+            box.innerHTML = `<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;"><span style="flex: 1;">${text}</span><button class="prompt-close-btn" onclick="document.getElementById('prompt-suggestion').style.display='none'">✕</button></div>`;
+            box.style.display = 'block';
+        } else {
+            box.innerHTML = '';
+            box.style.display = 'none';
+        }
     }
 }
 
