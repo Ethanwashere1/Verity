@@ -35,14 +35,6 @@ keys in the client-side code.
    AI provider endpoint (or uses the built‑in Cloudflare AI binding).  The
    response is streamed back to the browser.
 
-## Security considerations
-
-- **Never** hard‑code the API key in the browser.  It would be visible to all
-  users and checked into source control.
-- Use Cloudflare secrets or environment variables to keep sensitive values
-  out of the repo (`wrangler secret put AI_API_KEY` when deploying).
-- The worker acts as a thin proxy so the key is never exposed.
-
 ## Setup & deployment
 
 1. Install Wrangler:
