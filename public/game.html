@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Verity</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="modal-styles.css">
+    <script defer src="main.js"></script>
+    <script defer src="game.js"></script>
+  </head>
+  <body class="game-page">
+    <header>
+        <div class="nav-bar">
+            <div class="logo">
+                <a href="index.html">
+                    <span class="logo-text">VER</span><span class="logo-highlight">ITY</span>
+                </a>
+            </div>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="tutorial.html">Tutorials</a></li>
+                    <li><a href="game.html">Game</a></li>
+                    <li><a href="quiz.html">Quiz</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+        <div id="timeline">
+            <h2>Select a mission</h2>
+            <ul class="missions">
+                <li class="mission-box" data-mission="1">Mission 1</li>
+                <li class="mission-box" data-mission="2">Mission 2</li>
+                <li class="mission-box" data-mission="3">Mission 3</li>
+            </ul>
+        </div>
+
+        <div id="game-area" class="container" style="display:none;">
+            <div id="left-panel">
+                <div class="mission-controls">
+                    <button id="back-to-timeline">Back to Missions</button>
+                </div>
+                <div class="characters-list">
+                    <h3>Characters</h3>
+                    <ul id="character-list">
+                        <!-- populated by JS -->
+                    </ul>
+                </div>
+                <!-- Additional evidence is a tab added dynamically with character buttons -->
+                 <div class="mission-actions">
+                    <button id="open-verdict">Submit Verdict</button>
+                </div>
+            </div>
+            <div id="right-panel">
+                <div class="right-panel-header">
+                    <h2>Investigation</h2>
+                    <div id="hearts-display" class="hearts-display"></div>
+                </div>
+                <div id="character-detail">
+                    <!-- character details populated by JS -->
+                </div>
+                <div id="chat-interface" style="display:none;">
+                    <div id="chat-messages" class="chat-messages">
+                        <!-- messages populated by JS -->
+                    </div>
+                    <div id="prompt-suggestion" class="prompt-suggestion" style="display:none;"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chat-input" placeholder="Ask the character a question..." class="chat-input">
+                        <button id="chat-send" class="chat-send-btn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Details Modal -->
+        <div id="mission-details-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close">&times;</span>
+                <h2 id="mission-title-detail">Mission Title</h2>
+                <div class="mission-details">
+                    <div class="mission-section">
+                        <h3>Objective</h3>
+                        <p id="mission-description">Mission description...</p>
+                    </div>
+                    <div class="mission-section">
+                        <h3>Scenario</h3>
+                        <p id="mission-scenario">Mission scenario...</p>
+                    </div>
+                    <button class="modal-action-btn" onclick="document.getElementById('mission-details-modal').classList.remove('active')">Begin Investigation</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Modal -->
+        <div id="notification-modal" class="modal">
+            <div class="modal-content small">
+                <span class="modal-close">&times;</span>
+                <h3 id="notification-title">Notification</h3>
+                <p id="notification-message">Message content...</p>
+                <button class="modal-action-btn" onclick="document.getElementById('notification-modal').classList.remove('active')">OK</button>
+            </div>
+        </div>
+
+        <!-- Verdict Modal -->
+        <div id="verdict-modal" class="modal">
+            <div class="modal-content small">
+                <span class="modal-close">&times;</span>
+                <h3>Submit Verdict</h3>
+                <label for="verdict-select">Who is guilty?</label>
+                <select id="verdict-select">
+                    <option value="">Choose...</option>
+                </select>
+                <label for="verdict-just">Justification:</label>
+                <textarea id="verdict-just" rows="5" style="width:100%"></textarea>
+                <!-- inline validation warning (shown when missing info) -->
+                <div id="verdict-warning" class="warning" style="display:none; margin-top:8px;"></div>
+                <div style="margin-top:10px;text-align:right;">
+                    <button id="verdict-submit">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Complete Modal -->
+        <div id="mission-complete-modal" class="modal">
+            <div class="modal-content small">
+                <h3 id="complete-title">Mission Complete!</h3>
+                <p id="complete-message">You have successfully solved this case.</p>
+                <button id="return-to-timeline" class="modal-action-btn">Return to Timeline</button>
+            </div>
+        </div>
+
+    </body>
+</html>
