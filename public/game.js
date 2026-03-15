@@ -8,9 +8,9 @@ const missionsData = {
         scenario: 'The theft occurred during the night shift on March 15th. Security footage was disabled.',
         correctCharacter: 'char1',
         characters: [
-            { id: 'char1', name: 'Detective Morgan', bio: 'Senior detective with 20 years experience. Recently passed over for promotion.', image: 'Assets/Prisoner 1 SVG.svg', unethical: true },
-            { id: 'char2', name: 'Guard Jenkins', bio: 'Night security guard. Has a clean record and excellent attendance.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false },
-            { id: 'char3', name: 'Curator Webb', bio: 'Museum curator and expert in ancient artifacts. Loves the collection.', image: 'Assets/Prisoner 1 SVG.svg', unethical: false }
+            { id: 'char1', name: 'Detective Morgan', bio: 'Senior detective with 20 years experience. Recently passed over for promotion.', image: 'Assets/Detective 1 SVG.svg', unethical: true },
+            { id: 'char2', name: 'Guard Jenkins', bio: 'Night security guard. Has a clean record and excellent attendance.', image: 'Assets/Guard 1 SVG.svg', unethical: false },
+            { id: 'char3', name: 'Curator Webb', bio: 'Museum curator and expert in ancient artifacts. Loves the collection.', image: 'Assets/Curator 1 SVG.svg', unethical: false }
         ],
         evidence: [
             { title: 'Photo', content: 'Security camera shows masked individual entering artifact vault at 2:47 AM.' },
