@@ -66,9 +66,29 @@ function initGamePage() {
         });
     });
 
+    const briefingButtons = document.querySelectorAll('.briefing-btn');
+    briefingButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const missionId = button.dataset.mission;
+            if (missionsData[missionId]) {
+                showMissionDetails(missionsData[missionId]);
+            }
+        });
+    });
+
     // wire back-to-timeline if present
     const backBtn = document.getElementById('back-to-timeline');
     if (backBtn) backBtn.addEventListener('click', backToTimeline);
+
+    const missionBriefingBtn = document.getElementById('view-mission-briefing');
+    if (missionBriefingBtn) {
+        missionBriefingBtn.addEventListener('click', () => {
+            if (currentMission && missionsData[currentMission]) {
+                showMissionDetails(missionsData[currentMission]);
+            }
+        });
+    }
 
     // verdict modal handlers
     const openVerdict = document.getElementById('open-verdict');
