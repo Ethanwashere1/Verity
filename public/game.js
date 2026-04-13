@@ -62,7 +62,12 @@ function initGamePage() {
     const missions = document.querySelectorAll('.missions .mission-box');
     missions.forEach(box => {
         box.addEventListener('click', () => {
-            showMission(box.dataset.mission);
+            const missionId = box.dataset.mission;
+            if (missionId === '2' || missionId === '3') {
+                alert('In progress');
+            } else {
+                showMission(box.dataset.mission);
+            }
         });
     });
 
