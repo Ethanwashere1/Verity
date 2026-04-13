@@ -64,7 +64,7 @@ function initGamePage() {
         box.addEventListener('click', () => {
             const missionId = box.dataset.mission;
             if (missionId === '2' || missionId === '3') {
-                alert('In progress');
+                showNotification('In Development', 'This mission is currently in development.');
             } else {
                 showMission(box.dataset.mission);
             }
