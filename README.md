@@ -30,8 +30,7 @@ keys in the client-side code.
    also serves static assets (the entire `public/` directory) so the same
    worker can host the HTML/CSS/JS for the game.  `index.html` is your
    landing page; other files are linked relative to it.
-3. The worker attaches the secret API key stored in the environment (via
-   `wrangler secret put AI_API_KEY`) and forwards the request to the real
+3. The worker attaches the secret API key stored in the environment and forwards the request to the real
    AI provider endpoint (or uses the built‑in Cloudflare AI binding).  The
    response is streamed back to the browser.
 
