@@ -59,5 +59,4 @@ keys in the client-side code.
 ## Local development
 
 Run `wrangler dev` to start a local server that mimics the Worker runtime.
-Point your frontend at `http://localhost:8787/api/ai` while developing.
 
