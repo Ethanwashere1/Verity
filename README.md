@@ -1,8 +1,7 @@
 # Verity
 
-This project is a browser-based interactive game.  It uses Cloudflare Workers
-as a backend to securely call third-party AI services without exposing API
-keys in the client-side code.
+This project is a browser-based interactive game to teach AI literacy.
+Link: https://verity.ethanyijeng.workers.dev
 
 ## Architecture
 
